@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Aahyl — Portfolio</title>
+
+  <!--
+    FONTS USED:
+    - Outfit           → clean geometric sans, Apple SF-like feel
+    - Cormorant Garamond → elegant high-contrast serif for headings
+    - JetBrains Mono   → monospace for labels and tags
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300;1,600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+
+  <style>
+
+    /* ══════════════════════════════════════
+       CSS VARIABLES — design tokens
+       Change a value here and it updates
+       everywhere it's used on the page.
+    ══════════════════════════════════════ */
+    :root {
+      --text:      #1c1c1e;
+      --text-2:    #3a3a3c;
+      --text-3:    #8e8e93;
+      --accent:    #0071e3;
+      --surface:   #ffffff;
+      --glass-bg:  rgba(255,255,255,0.55);
+      --glass-border: rgba(255,255,255,0.85);
+      --border:    rgba(0,0,0,0.08);
+      --sans:     'Outfit', sans-serif;
+      --serif:    'Cormorant Garamond', serif;
+      --mono:     'JetBrains Mono', monospace;
+      --radius-lg: 28px;
+    }
+
+    /* ══════════════════════════════════════
+       HIDE SCROLLBAR — all browsers
+       scrollbar-width:none   = Firefox
+       ::-webkit-scrollbar    = Chrome/Safari/Edge
+    ══════════════════════════════════════ */
+    html, body { scrollbar-width: none; }
+    ::-webkit-scrollbar { display: none; }
+
+    /* ══════════════════════════════════════
+       RESET
+    ══════════════════════════════════════ */
+    *, *::before, *::after {
+      margin: 0; padding: 0;
+      box-sizing: border-box;
+      cursor: none;
+    }
+
+    /* ══════════════════════════════════════
+       TEXT SELECTION HIGHLIGHT
+    ══════════════════════════════════════ */
+    ::selection {
+      background: rgba(0,113,227,0.15);
+      color: var(--text);
+    }
+
+    /* ══════════════════════════════════════
+       BODY + SCROLL GRADIENT BACKGROUND
+       The background-color is set by JS on scroll.
+       It transitions between a list of colour stops
+       so it feels like the page is breathing.
+       transition: background 1.2s ease makes it smooth.
+    ══════════════════════════════════════ */
+    body {
+      color: var(--text);
+      font-family: var(--sans);
+      font-weight: 300;
+      overflow-x: hidden;
+      background: #f2f2f7;
+      transition: background 1.2s ease;
+    }
+
+    /* ══════════════════════════════════════
+       CUSTOM CURSOR — TWO LAYERS
+       .cursor-dot  → 8px dot, snaps to mouse instantly
+       .cursor-ring → 36px ring, follows with a lerp lag
+       When near interactive elements, .cursor-grow
+       is added → ring expands and tints blue
+    ══════════════════════════════════════ */
+    .cursor-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--text);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 99999;
+    }
+
+    .cursor-ring {
+      width: 36px;
+      height: 36px;
+      border: 1.5px solid rgba(0,0,0,0.2);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 99998;
+      /* width/height/background all transition for the grow effect */
+      transition: width 0.35s ease,
+                  height 0.35s ease,
+                  background 0.35s ease,
+                  border-color 0.35s ease;
+    }
+
+    /* grow state — triggered by JS on hover of interactive elements */
+    .cursor-ring.cursor-grow {
+      width: 56px;
+      height: 56px;
+      background: rgba(0,113,227,0.08);
+      border-color: rgba(0,113,227,0.4);
+    }
+
+    /* ══════════════════════════════════════
+       SCROLL REVEAL
+       Starts invisible + 30px below.
+       JS adds .visible when 12% enters viewport.
+    ══════════════════════════════════════ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.9s cubic-bezier(0.16,1,0.3,1),
+                  transform 0.9s cubic-bezier(0.16,1,0.3,1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal:nth-child(2) { transition-delay: 0.08s; }
+    .reveal:nth-child(3) { transition-delay: 0.16s; }
+    .reveal:nth-child(4) { transition-delay: 0.24s; }
+    .reveal:nth-child(5) { transition-delay: 0.32s; }
+
+    /* ══════════════════════════════════════
+       NAVBAR — LIQUID GLASS PILL
+       Floats centred at the top.
+       Glass effect uses:
+       • low-opacity white background
+       • backdrop-filter blur + saturate
+       • bright white border = catches light
+       • layered box-shadows = depth
+    ══════════════════════════════════════ */
+    nav {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 900;
+      display: flex;
+      align-items: center;
+      gap: 48px;
+      padding: 14px 32px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(32px) saturate(180%);
+      -webkit-backdrop-filter: blur(32px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.85);
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.06),
+        0 8px 32px rgba(0,0,0,0.06),
+        inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+
+    .nav-logo {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.3px;
+      color: var(--text);
+    }
+
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--text-2);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    /* ══════════════════════════════════════
+       HERO
+    ══════════════════════════════════════ */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 120px 48px 80px;
+      position: relative;
+    }
+
+    /* floating blue orb in background — just a blurred radial gradient */
+    #hero::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,113,227,0.07) 0%, transparent 70%);
+      top: 10%; left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      animation: orb-float 8s ease-in-out infinite;
+    }
+
+    @keyframes orb-float {
+      0%, 100% { transform: translateX(-50%) translateY(0px);   }
+      50%       { transform: translateX(-50%) translateY(-20px); }
+    }
+
+    /* badge above the headline */
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      background: rgba(0,113,227,0.08);
+      border: 1px solid rgba(0,113,227,0.15);
+      padding: 6px 16px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    /* clamp(min, preferred, max) = scales font with screen width */
+    .hero-headline {
+      font-family: var(--serif);
+      font-size: clamp(56px, 10vw, 120px);
+      font-weight: 300;
+      line-height: 1.0;
+      letter-spacing: -2px;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .hero-headline em { font-style: italic; color: var(--accent); }
+
+    .hero-sub {
+      font-family: var(--sans);
+      font-size: clamp(16px, 2.5vw, 22px);
+      font-weight: 300;
+      color: var(--text-3);
+      max-width: 520px;
+      line-height: 1.6;
+      margin-bottom: 48px;
+    }
+
+    .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+    /* bouncing scroll indicator */
+    .scroll-cue {
+      position: absolute;
+      bottom: 40px; left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-3);
+      text-transform: uppercase;
+    }
+    .scroll-cue-line {
+      width: 1px; height: 32px;
+      background: linear-gradient(to bottom, var(--text-3), transparent);
+      animation: scroll-bounce 2s ease-in-out infinite;
+    }
+    @keyframes scroll-bounce {
+      0%, 100% { opacity: 0.3; transform: scaleY(1);   }
+      50%       { opacity: 1;   transform: scaleY(1.3); }
+    }
+
+    /* ══════════════════════════════════════
+       BUTTONS — RIPPLE ANIMATION
+       A completely different animation from shimmer.
+       When you hover, a circle expands from the
+       center of the button outward (like a water ripple).
+       It uses a ::after pseudo-element that starts
+       small and scales up to cover the whole button.
+    ══════════════════════════════════════ */
+    .btn {
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 999px;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 400;
+      letter-spacing: -0.1px;
+      text-decoration: none;
+      border: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      z-index: 0;
+    }
+    .btn:active { transform: scale(0.97); }
+
+    /* the ripple circle — starts tiny in the center, expands on hover */
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      /* starts as a tiny circle centered */
+      background: rgba(255,255,255,0.25);
+      transform: scale(0);
+      transition: transform 0.5s cubic-bezier(0.16,1,0.3,1),
+                  opacity 0.5s ease;
+      opacity: 0;
+      z-index: -1;
+    }
+
+    /* on hover — ripple expands to fill the button */
+    .btn:hover::after {
+      transform: scale(2.5);
+      opacity: 1;
+    }
+
+    /* PRIMARY — solid blue */
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0,113,227,0.28);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 6px 24px rgba(0,113,227,0.38);
+      transform: translateY(-2px);
+    }
+
+    /* GHOST — glass style */
+    .btn-ghost {
+      background: rgba(255,255,255,0.65);
+      color: var(--text);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .btn-ghost::after { background: rgba(0,0,0,0.04); }
+    .btn-ghost:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    /* ══════════════════════════════════════
+       SHARED SECTION STYLES
+    ══════════════════════════════════════ */
+    section {
+      padding: 100px 48px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .label {
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    /* thin line between sections */
+    .divider {
+      width: 100%;
+      max-width: 1100px;
+      height: 1px;
+      background: var(--border);
+      margin: 0 auto;
+    }
+
+    /* ══════════════════════════════════════
+       ABOUT — two-column grid
+    ══════════════════════════════════════ */
+    #about {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .about-heading {
+      font-family: var(--serif);
+      font-size: clamp(36px, 5vw, 60px);
+      font-weight: 300;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      letter-spacing: -1px;
+    }
+    .about-heading em { font-style: italic; color: var(--accent); }
+
+    .about-body {
+      font-size: 16px;
+      font-weight: 300;
+      color: var(--text-2);
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+
+    /* glass stats card — right column */
+    .about-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06),
+                  inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+    .card-stat { margin-bottom: 32px; }
+    .card-stat:last-child { margin-bottom: 0; }
+    .card-stat-num {
+      font-family: var(--serif);
+      font-size: 52px;
+      font-weight: 600;
+      line-height: 1;
+      color: var(--text);
+      letter-spacing: -2px;
+    }
+    .card-stat-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-3);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .card-divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+    /* ══════════════════════════════════════
+       PROJECTS — glass tile grid
+    ══════════════════════════════════════ */
+    #projects .section-header { margin-bottom: 56px; }
+
+    .section-heading {
+      font-family: var(--serif);
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 300;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+    .section-heading em { font-style: italic; color: var(--accent); }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .project-tile {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: var(--radius-lg);
+      padding: 36px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05),
+                  inset 0 1px 0 rgba(255,255,255,0.9);
+      /* transition for the lift + dim effects */
+      transition: transform 0.35s cubic-bezier(0.16,1,0.3,1),
+                  box-shadow 0.35s ease,
+                  opacity 0.35s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* top-left gradient gloss */
+    .project-tile::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 60%);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    /* when ANY tile is hovered, dim the others */
+    .projects-grid:has(.project-tile:hover) .project-tile {
+      opacity: 0.45;
+      transform: scale(0.97);
+    }
+    /* the hovered tile itself stays bright and lifts */
+    .projects-grid:has(.project-tile:hover) .project-tile:hover {
+      opacity: 1;
+      transform: translateY(-8px) scale(1);
+      box-shadow: 0 20px 48px rgba(0,0,0,0.12),
+                  inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+
+    .tile-num {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-3);
+      margin-bottom: 24px;
+    }
+    .tile-name {
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 300;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+      line-height: 1.1;
+    }
+    .tile-desc {
+      font-size: 13px;
+      font-weight: 300;
+      color: var(--text-3);
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+    .tile-tag {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(0,113,227,0.08);
+      border: 1px solid rgba(0,113,227,0.15);
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+
+    .coming-note {
+      text-align: center;
+      margin-top: 48px;
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 18px;
+      color: var(--text-3);
+    }
+
+    /* ══════════════════════════════════════
+       CONTACT
+    ══════════════════════════════════════ */
+    #contact { text-align: center; }
+
+    .contact-heading {
+      font-family: var(--serif);
+      font-size: clamp(52px, 9vw, 110px);
+      font-weight: 300;
+      line-height: 1;
+      letter-spacing: -3px;
+      margin-bottom: 20px;
+    }
+    .contact-heading em { font-style: italic; color: var(--accent); }
+
+    .contact-sub {
+      font-size: 16px;
+      font-weight: 300;
+      color: var(--text-3);
+      margin-bottom: 48px;
+    }
+
+    .contact-email {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: clamp(13px, 2vw, 17px);
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(0,113,227,0.3);
+      padding-bottom: 2px;
+      margin-bottom: 48px;
+      transition: border-color 0.2s ease;
+      letter-spacing: 0.5px;
+    }
+    .contact-email:hover { border-color: var(--accent); }
+
+    .contact-actions { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+
+    /* ══════════════════════════════════════
+       FOOTER
+    ══════════════════════════════════════ */
+    footer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--text-3);
+    }
+
+    /* ══════════════════════════════════════
+       POPUP
+       Hidden via opacity:0 + pointer-events:none.
+       .open class flips both.
+       .popup-box slides up + scales in.
+    ══════════════════════════════════════ */
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(242,242,247,0.75);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 800;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    .popup-overlay.open { opacity: 1; pointer-events: all; }
+
+    .popup-box {
+      background: var(--surface);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 56px 64px;
+      text-align: center;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.12),
+                  inset 0 1px 0 rgba(255,255,255,0.9);
+      transform: translateY(40px) scale(0.96);
+      transition: transform 0.5s cubic-bezier(0.16,1,0.3,1);
+    }
+    .popup-overlay.open .popup-box { transform: translateY(0) scale(1); }
+
+    .popup-eyebrow {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .popup-box h3 {
+      font-family: var(--serif);
+      font-size: 42px;
+      font-weight: 300;
+      font-style: italic;
+      letter-spacing: -1px;
+      margin-bottom: 12px;
+    }
+    .popup-box p {
+      font-size: 14px;
+      color: var(--text-3);
+      margin-bottom: 28px;
+      font-weight: 300;
+    }
+    .popup-email {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(0,113,227,0.3);
+      padding-bottom: 2px;
+      margin-bottom: 36px;
+    }
+    .popup-close {
+      display: block;
+      margin-top: 24px;
+      font-size: 12px;
+      color: var(--text-3);
+      background: none;
+      border: none;
+      font-family: var(--sans);
+      font-weight: 300;
+      letter-spacing: 0.5px;
+      transition: color 0.2s ease;
+    }
+    .popup-close:hover { color: var(--text); }
+
+  </style>
+</head>
+<body>
+
+  <!-- CURSOR -->
+  <div class="cursor-dot"  id="cursorDot"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAVBAR -->
+  <nav>
+    <span class="nav-logo">Aahyl</span>
+    <ul class="nav-links">
+      <li><a href="#about">About</a></li>
+      <li><a href="#projects">Work</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero" style="max-width:none; padding-left:48px; padding-right:48px;">
+    <div class="hero-eyebrow reveal">Sophomore · BITS Pilani Dubai</div>
+    <h1 class="hero-headline reveal">Aahyl<br><em>builds things.</em></h1>
+    <p class="hero-sub reveal">Designing software solutions that are clean, intentional, and built to last.</p>
+    <div class="hero-actions reveal">
+      <button class="btn btn-primary" id="heroContactBtn">Get in touch</button>
+      <a class="btn btn-ghost" href="#projects">See my work</a>
+    </div>
+    <div class="scroll-cue">
+      <div class="scroll-cue-line"></div>
+      Scroll
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="about-left">
+      <span class="label reveal">001 — About</span>
+      <h2 class="about-heading reveal">Building with<br><em>purpose.</em></h2>
+      <p class="about-body reveal">
+        I'm Aahyl — a sophomore at BITS Pilani Dubai Campus with a deep obsession
+        for software that actually solves problems. Not just code that works, but
+        products that feel inevitable.
+      </p>
+      <p class="about-body reveal">
+        Still early in the journey. Moving fast. Every project is a new chance
+        to push what's possible.
+      </p>
+    </div>
+    <div class="about-card reveal">
+      <div class="card-stat">
+        <div class="card-stat-num">2nd</div>
+        <div class="card-stat-label">Year of Study</div>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-stat">
+        <div class="card-stat-num">&#8734;</div>
+        <div class="card-stat-label">Ideas in the pipeline</div>
+      </div>
+      <div class="card-divider"></div>
+      <div class="card-stat">
+        <div class="card-stat-num">0&#8594;</div>
+        <div class="card-stat-label">Projects and counting</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="section-header">
+      <span class="label reveal">002 — Work</span>
+      <h2 class="section-heading reveal">Selected <em>projects.</em></h2>
+    </div>
+    <div class="projects-grid">
+      <div class="project-tile reveal">
+        <div class="tile-num">001</div>
+        <div class="tile-name">Project Alpha</div>
+        <div class="tile-desc">Something exciting brewing — details coming soon as it takes shape.</div>
+        <span class="tile-tag">In Progress</span>
+      </div>
+      <div class="project-tile reveal">
+        <div class="tile-num">002</div>
+        <div class="tile-name">Project Beta</div>
+        <div class="tile-desc">An idea that's been living in my head. Time to make it real.</div>
+        <span class="tile-tag">Planned</span>
+      </div>
+      <div class="project-tile reveal">
+        <div class="tile-num">003</div>
+        <div class="tile-name">Project Gamma</div>
+        <div class="tile-desc">More to come. The best work is always the next one.</div>
+        <span class="tile-tag">Planned</span>
+      </div>
+    </div>
+    <p class="coming-note reveal">"The best projects are the ones not yet built."</p>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <span class="label reveal">003 — Contact</span>
+    <h2 class="contact-heading reveal">Let's <em>talk.</em></h2>
+    <p class="contact-sub reveal">Open to collabs, ideas, and good conversations.</p>
+    <a class="contact-email reveal" href="mailto:Aahylhirfan5@gmail.com">Aahylhirfan5@gmail.com</a>
+    <div class="contact-actions reveal">
+      <button class="btn btn-primary" id="contactPopupBtn">Open contact</button>
+      <button class="btn btn-ghost"   id="topBtn">Back to top &#8593;</button>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span>Aahyl Hirfan &copy; 2026</span>
+    <span>Built with HTML, CSS &amp; JS</span>
+  </footer>
+
+  <!-- POPUP -->
+  <div class="popup-overlay" id="popup">
+    <div class="popup-box">
+      <div class="popup-eyebrow">Get in touch</div>
+      <h3>Say hello.</h3>
+      <p>Always open to new ideas and conversations.</p>
+      <a class="popup-email" href="mailto:Aahylhirfan5@gmail.com">Aahylhirfan5@gmail.com</a>
+      <br>
+      <button class="btn btn-primary" id="closeBtn" style="margin-top:16px;">Close</button>
+      <button class="popup-close" id="closeBtn2">or press Escape</button>
+    </div>
+  </div>
+
+  <script>
+
+    /* ══════════════════════════════════════
+       1. SCROLL GRADIENT BACKGROUND
+       As you scroll, the page background colour
+       shifts through a list of soft gradient stops.
+       scrollProgress goes 0 (top) → 1 (bottom).
+       We pick two adjacent colours and lerp between them.
+       body transition:background 1.2s makes it silky smooth.
+    ══════════════════════════════════════ */
+
+    /* each stop is [r, g, b] */
+    var gradientStops = [
+      [242, 242, 247],   /* Apple grey — hero */
+      [235, 242, 255],   /* soft blue — about */
+      [240, 248, 245],   /* soft mint — projects */
+      [255, 242, 242],   /* soft blush — contact */
+      [245, 240, 255],   /* soft lavender — footer */
+    ];
+
+    /* linearly interpolate between two numbers */
+    function lerp(a, b, t) { return a + (b - a) * t; }
+
+    function updateBgOnScroll() {
+      /* how far scrolled as 0→1 */
+      var scrollable = document.body.scrollHeight - window.innerHeight;
+      var progress   = scrollable > 0 ? window.scrollY / scrollable : 0;
+
+      /* map progress to which two stops we're between */
+      var scaled = progress * (gradientStops.length - 1);
+      var index  = Math.floor(scaled);
+      var t      = scaled - index;   /* 0→1 between the two stops */
+
+      /* clamp so we don't go out of array bounds */
+      var a = gradientStops[Math.min(index,     gradientStops.length - 1)];
+      var b = gradientStops[Math.min(index + 1, gradientStops.length - 1)];
+
+      var r = Math.round(lerp(a[0], b[0], t));
+      var g = Math.round(lerp(a[1], b[1], t));
+      var bv= Math.round(lerp(a[2], b[2], t));
+
+      document.body.style.background = "rgb(" + r + "," + g + "," + bv + ")";
+    }
+
+    window.addEventListener("scroll", updateBgOnScroll);
+    updateBgOnScroll(); /* run once on load */
+
+    /* ══════════════════════════════════════
+       2. DUAL CURSOR
+       cursorDot  → snaps exactly to mouse (instant)
+       cursorRing → lags using requestAnimationFrame lerp
+                    lerp = moves 14% of remaining distance
+                    each frame = natural trailing effect
+    ══════════════════════════════════════ */
+    var dot    = document.getElementById("cursorDot");
+    var ring   = document.getElementById("cursorRing");
+    var mouseX = 0, mouseY = 0;
+    var ringX  = 0, ringY  = 0;
+
+    document.addEventListener("mousemove", function(e) {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      dot.style.left = mouseX + "px";
+      dot.style.top  = mouseY + "px";
+    });
+
+    /* requestAnimationFrame runs this every screen frame (~60fps) */
+    function animateRing() {
+      ringX += (mouseX - ringX) * 0.14;
+      ringY += (mouseY - ringY) * 0.14;
+      ring.style.left = ringX + "px";
+      ring.style.top  = ringY + "px";
+      requestAnimationFrame(animateRing);
+    }
+    animateRing();
+
+    /* grow ring when hovering anything interactive */
+    document.querySelectorAll("a, button, .project-tile, .about-card, nav").forEach(function(el) {
+      el.addEventListener("mouseenter", function() { ring.classList.add("cursor-grow");    });
+      el.addEventListener("mouseleave", function() { ring.classList.remove("cursor-grow"); });
+    });
+
+    /* ══════════════════════════════════════
+       3. POPUP
+    ══════════════════════════════════════ */
+    function openPopup()  { document.getElementById("popup").classList.add("open");    }
+    function closePopup() { document.getElementById("popup").classList.remove("open"); }
+
+    document.getElementById("heroContactBtn").addEventListener("click", openPopup);
+    document.getElementById("contactPopupBtn").addEventListener("click", openPopup);
+    document.getElementById("closeBtn").addEventListener("click",  closePopup);
+    document.getElementById("closeBtn2").addEventListener("click", closePopup);
+
+    /* click background to close */
+    document.getElementById("popup").addEventListener("click", function(e) {
+      if (e.target === this) closePopup();
+    });
+
+    /* Escape key closes popup */
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") closePopup();
+    });
+
+    /* ══════════════════════════════════════
+       4. BACK TO TOP
+    ══════════════════════════════════════ */
+    document.getElementById("topBtn").addEventListener("click", function() {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    /* ══════════════════════════════════════
+       5. SCROLL REVEAL
+       IntersectionObserver fires when 12% of
+       a .reveal element enters the viewport.
+       Adds .visible → triggers CSS fade+slide.
+    ══════════════════════════════════════ */
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+        }
+      });
+    }, { threshold: 0.12 });
+
+    document.querySelectorAll(".reveal").forEach(function(el) {
+      observer.observe(el);
+    });
+
+  </script>
+</body>
+</html>
