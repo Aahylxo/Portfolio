@@ -1,0 +1,27 @@
+# Portfolio (HTML/CSS JS Project)
+
+A clean, Apple-inspired personal portfolio built from scratch using pure HTML, CSS, and vanilla JavaScript. No frameworks, no libraries — just fundamentals done well.
+
+✨ Features
+Liquid Glass Navbar — floating pill navbar using backdrop-filter: blur() and layered transparency, inspired by Apple's visionOS UI
+Scroll Gradient Background — background colour shifts through 5 soft tones as you scroll, blended in real-time using linear interpolation (lerp)
+Dual-Layer Custom Cursor — a dot that snaps to the mouse instantly + a ring that trails behind using requestAnimationFrame, expands near interactive elements
+Ripple Button Animation — a circle expands from the center of buttons on hover using CSS ::after and transform: scale()
+Scroll Reveal — elements fade and slide up into view using IntersectionObserver
+Project Focus Effect — hovering one project card dims and scales down all others using the CSS :has() selector
+Contact Popup Modal — slides up and scales in, closeable via button, background click, or Escape key
+No scrollbar — hidden cleanly across all browsers
+
+🧠 Concepts I Learned Building This
+CSS custom properties (--variables) as design tokens
+backdrop-filter: blur() for frosted glass surfaces
+clamp() for fluid responsive typography
+::before / ::after pseudo-elements for visual effects
+@keyframes for looping animations
+IntersectionObserver API for scroll-triggered reveals
+requestAnimationFrame for smooth 60fps cursor animation
+Lerp (linear interpolation) — blending between values smoothly
+opacity + pointer-events: none for the popup show/hide trick
+:has() — CSS parent selector for the project hover dimming
+grid-template-columns for two and three column layouts
+z-index stacking and position: fixed for layered UI
