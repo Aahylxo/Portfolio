@@ -25,3 +25,4 @@ opacity + pointer-events: none for the popup show/hide trick
 :has() — CSS parent selector for the project hover dimming
 grid-template-columns for two and three column layouts
 z-index stacking and position: fixed for layered UI
+.
